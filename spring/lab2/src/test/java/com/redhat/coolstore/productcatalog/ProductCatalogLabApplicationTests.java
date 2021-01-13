@@ -1,4 +1,4 @@
-package com.redhat.coolstore.productcataloglab;
+package com.redhat.coolstore.productcatalog;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -7,12 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.redhat.coolstore.productcataloglab.service.ProductCatalogService;
+import com.redhat.coolstore.productcatalog.service.ProductCatalogService;
 
 
 @SpringBootTest
 @ActiveProfiles("dev")
-class ProductCatalogLab1ApplicationTests {
+class ProductCatalogApplicationTests {
 
     @Autowired
     private ProductCatalogService productCatalogService;
