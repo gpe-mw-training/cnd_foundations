@@ -1,11 +1,10 @@
 package io.openshift.booster;
 
 import io.vertx.circuitbreaker.CircuitBreakerOptions;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;
-import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.ext.web.handler.sockjs.PermittedOptions;
+import io.vertx.ext.web.handler.sockjs.SockJSBridgeOptions;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.rxjava.circuitbreaker.CircuitBreaker;
 import io.vertx.rxjava.circuitbreaker.HystrixMetricHandler;
 import io.vertx.rxjava.core.AbstractVerticle;
@@ -44,7 +43,7 @@ public class GreetingServiceVerticle extends AbstractVerticle {
         Router router = Router.router(vertx);
 
         router.get("/health").handler(rc -> rc.response().end("OK"));
-        router.get("/eventbus/*").handler(getSockJsHandler());
+        router.mountSubRouter("/eventbus", getSockJsHandler());
         // The address is the circuit breaker notification address configured above.
         router.get("/metrics").handler(HystrixMetricHandler.create(vertx, "circuit-breaker"));
 
@@ -57,12 +56,12 @@ public class GreetingServiceVerticle extends AbstractVerticle {
         router.get("/*").handler(StaticHandler.create());
 
         vertx.createHttpServer()
-            .requestHandler(router::accept)
+            .requestHandler(router)
             .listen(8080);
     }
 
     private void greeting(RoutingContext rc) {
-        circuit.rxExecuteCommandWithFallback(
+        circuit.rxExecuteWithFallback(
             future ->
                 client.get("/api/name").rxSend()
                     .doOnEach(r -> System.out.println(r.getValue().bodyAsString()))
@@ -89,9 +88,9 @@ public class GreetingServiceVerticle extends AbstractVerticle {
             );
     }
 
-    private Handler<RoutingContext> getSockJsHandler() {
+    private Router getSockJsHandler() {
         SockJSHandler sockJSHandler = SockJSHandler.create(vertx);
-        BridgeOptions options = new BridgeOptions();
+        SockJSBridgeOptions options = new SockJSBridgeOptions();
         options.addInboundPermitted(
             new PermittedOptions().setAddress("circuit-breaker"));
         options.addOutboundPermitted(
